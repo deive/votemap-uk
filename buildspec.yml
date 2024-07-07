@@ -15,4 +15,4 @@ phases:
 artifacts:
   base-directory: 'dist'
   files:
-    - /**/*
+    - '**/*'
