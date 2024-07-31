@@ -1,12 +1,17 @@
 @import "node_modules/ol/ol.css";
+@import "node_modules/uikit/dist/css/uikit.css";
 
 html, body {
   margin: 0;
   height: 100%;
 }
-#map {
+#content {
   position: absolute;
   top: 0;
   bottom: 0;
   width: 100%;
+}
+#modal-login.uk-modal.uk-open {
+  background-color: #f8f8f8DD;
+  opacity: 0.85;
 }

@@ -7,9 +7,21 @@
     "serve": "vite preview"
   },
   "devDependencies": {
-    "vite": "^5.3.1"
+    "vite": "^5.3.1",
+    "vite-plugin-string": "^1.2.3"
   },
   "dependencies": {
-    "ol": "latest"
+    "@aws-sdk/client-cognito-identity-provider": "^3.529.0",
+    "@aws-sdk/client-s3": "^3.529.0",
+    "@aws-sdk/credential-providers": "^3.529.0",
+    "@aws-sdk/s3-request-presigner": "^3.621.0",
+    "@reduxjs/toolkit": "^2.2.5",
+    "fast-xml-parser": "^4.4.1",
+    "lodash.isequal": "^4.5.0",
+    "ol": "^9.2.3",
+    "proj4": "^2.11.0",
+    "redux-query-sync": "^0.1.10",
+    "redux-views": "^1.0.3",
+    "uikit": "^3.21.3"
   }
 }
