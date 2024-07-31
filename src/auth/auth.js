@@ -2,7 +2,7 @@ import UIkit from 'uikit'
 import Icons from 'uikit/dist/js/uikit-icons'
 
 import store, { observeStore } from '../state'
-import authHtml from './auth.html'
+import authHtml from './auth.htmlt'
 import { selectLoginState, LoginState, login } from './state'
 
 document.getElementById("content").insertAdjacentHTML('afterend', authHtml)

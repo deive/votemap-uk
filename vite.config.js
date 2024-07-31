@@ -4,7 +4,7 @@ export default {
   plugins: [
     vitePluginString({
       include: [
-        '**/*.html',
+        'src/**/*.htmlt',
       ],
       exclude: 'node_modules/**',
     }),
