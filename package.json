@@ -19,6 +19,7 @@
     "fast-xml-parser": "^4.4.1",
     "lodash.isequal": "^4.5.0",
     "ol": "^9.2.3",
+    "p-debounce": "^4.0.0",
     "proj4": "^2.11.0",
     "redux-query-sync": "^0.1.10",
     "redux-views": "^1.0.3",

@@ -12,6 +12,7 @@ const authSlice = createSlice({
     initialState: {
         loginRequest: undefined,
         loginState: LoginState.UNAUTHENTICATED,
+        loginToken: undefined,
     },
     reducers: {
         login: (state, data) => {
@@ -24,14 +25,17 @@ const authSlice = createSlice({
         logout: (state) => {
             state.loginRequest = undefined
             state.loginState = LoginState.UNAUTHENTICATED
+            state.loginToken = undefined
         },
-        setLogInError: (state, error) => {
-            state.loginRequest.error = error
+        setLogInError: (state, data) => {
+            state.loginRequest = state.loginRequest ?? {}
+            state.loginRequest.error = data.payload.error
             state.loginState = LoginState.ERROR
         },
-        setLoggedIn: (state) => {
+        setLoggedIn: (state, data) => {
             state.loginRequest = undefined
             state.loginState = LoginState.AUTHENTICATED
+            state.loginToken = data.payload.token
         },
     },
 })
@@ -40,3 +44,4 @@ export default authSlice.reducer
 export const { login, logout, setLogInError, setLoggedIn } = authSlice.actions
 export const selectLoginRequest = state => state.loginRequest
 export const selectLoginState = state => state.loginState
+export const selectLoginToken = state => state.loginToken
