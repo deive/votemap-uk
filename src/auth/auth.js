@@ -35,10 +35,10 @@ observeStore(
             MODAL_LOGIN.show()
 
             if (state.loginState == LoginState.LOGGING_IN) {
-                LOGIN_ACTION.classList.add("uk-disabled")
+                LOGIN_ACTION.classList.add("uk-invisible")
                 LOGIN_LOADING.classList.remove("uk-invisible")
             } else {
-                LOGIN_ACTION.classList.remove("uk-disabled")
+                LOGIN_ACTION.classList.remove("uk-invisible")
                 LOGIN_LOADING.classList.add("uk-invisible")
             }
             
@@ -55,6 +55,8 @@ function doLogin() {
     const [email, password] = getEmailAndPasswordIfValid()
     if (email && password) {
         store.dispatch(login({username: email, password: password}))
+    } else {
+        showAuthError()
     }
 }
 
@@ -63,12 +65,8 @@ function showAuthError() {
 }
 
 function getEmailAndPasswordIfValid() {
-    const email = LOGIN_NAME.value.trim()
-    const password = LOGIN_PASSWORD.value.trim()
-
-    if (!email || !password) {
-        showAuthError()
-    }
-
-    return [email, password]
+    return [
+        LOGIN_NAME.value.trim(), 
+        LOGIN_PASSWORD.value.trim(),
+    ]
 }

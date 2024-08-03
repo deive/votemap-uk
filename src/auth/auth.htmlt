@@ -24,17 +24,12 @@
           </div>
       </form>
     </div>
-    <div class="uk-text-center" uk-grid>
-      <div class="uk-width-auto">
-        <div class="uk-align-left uk-margin-remove-top uk-invisible" uk-spinner></div>
-      </div>
-      <div class="uk-width-expand">
-        <button id="login-action" class="uk-button uk-button-primary uk-align-center uk-margin-remove-top"
-          type="button">Login</button>
-      </div>
-      <div class="uk-width-auto">
-        <div id="login-loading" class="uk-align-left uk-margin-remove-top uk-invisible" uk-spinner></div>
-      </div>
+
+    <div id="login-actions" class="uk-inline uk-width-expand">
+      <div id="login-loading" class="uk-position-bottom-center uk-margin-remove-top uk-invisible" uk-spinner></div>
+      <button id="login-action" class="uk-button uk-button-primary uk-align-center uk-margin-remove-top uk-margin-remove-bottom" type="button">
+        Login
+      </button>
     </div>
   </div>
 </div>
