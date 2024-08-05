@@ -1,8 +1,6 @@
 import store, { observeStore } from '../state'
 import { LoginState, logout, selectLoginState } from '../auth/state'
-import { selectCurrentLayer, setCountriesUrl, setCountryUrl, deselectCountry, setRegionUrl } from './state'
-// import { selectCountry, setCountry, deselectCountry, selectRegion, setRegion, deselectRegion } from '../route/slice.js'
-// import { selectCountriesMapUrl, selectCountryMapUrl, loadCountriesMapUrl, loadCountryMapUrl, selectLocalAuthorityRegionMapUrl, loadLocalAuthorityRegionMapUrl } from './slice.js'
+import { selectCurrentLayer, selectSelectedCountry, setCountriesUrl, setCountryUrl, deselectCountry, setRegionUrl, deselectRegion } from './state'
 import { createLayer, addLayer, removeLayer, fadeLayer, foregroundLayer, zoomOnLoad, zoomTo } from './map-ui.js'
 import { getCountriesMapUrl, getCountryMapUrl, getCountryMapYears, getRegionMapUrl } from '../aws/aws'
 
@@ -13,7 +11,7 @@ observeStore(
     return {
       loginState: selectLoginState(state.auth),
       currentLayer: selectCurrentLayer(state.map),
-      country: "",//selectCountry(state.route),
+      selectedCountry: selectSelectedCountry(state.map),
     }
   }, state => {
     if (state.loginState == LoginState.AUTHENTICATED) {
@@ -30,7 +28,7 @@ async function ensureLayer(state) {
   } else if (state.currentLayer.layerDepth == 1 && layers.length == 1) {
     loadCountryLayer(state)
   } else {
-    // loadCountriesLayer(state)
+    loadRegionLayer(state)
   }
 
   if (state.currentLayer) {
@@ -71,8 +69,9 @@ function loadCountryLayer(state) {
     state.currentLayer.name,
     state.currentLayer.url,
     feature => {
-      const countryName = feature.get(`CTRY${state.currentLayer.year}NM`)
-      loadCountryMapUrl(countryName)
+      // TODO: What is the feature attribute name?
+      const regionName = feature.get(`CTRY${state.currentLayer.year}NM`)
+      loadRegionMapUrl(state.currentLayer.name, state.currentLayer.year, '', regionName)
     },
     () => {
       store.dispatch(deselectCountry())
@@ -80,6 +79,25 @@ function loadCountryLayer(state) {
   )
   zoomOnLoad(layers[1].layer)
   addLayer(layers[1].layer)
+}
+
+function loadRegionLayer(state) {
+  loadLayer(
+    state.currentLayer.layerDepth,
+    state.currentLayer.name,
+    state.currentLayer.url,
+    feature => {
+      // TODO: What is the feature attribute name?
+      const regionName = feature.get(`CTRY${state.currentLayer.year}NM`)
+      // TODO: Get all the info from loadCountryLayer() above, plus also the extra regions path.
+      loadRegionMapUrl(regionName)
+    },
+    () => {
+      store.dispatch(deselectRegion())
+    }
+  )
+  zoomOnLoad(layers[state.currentLayer.layerDepth].layer)
+  addLayer(layers[state.currentLayer.layerDepth].layer)
 }
 
 function loadLayer(layerIndex, layerName, sourceUrl, onClick, onDeselect) {
@@ -117,12 +135,15 @@ async function loadCountryMapUrl(countryName) {
       name: countryName,
       year: years[0],
       years: years,
-      url: url
+      url: url,
     }))
   }
 }
 
-async function loadRegionMapUrl(currentLayer, name) {
-  // const url = await getCountriesMapUrl()
-  // store.dispatch(setChildLayer({mapUrl: url}))
+async function loadRegionMapUrl(countryName, countryYear, path, name) {
+  const url = await getRegionMapUrl(1927, "Local Authorities", countryName, countryYear, path)
+  store.dispatch(setRegionUrl({
+    name: name,
+    url: url,
+  }))
 }

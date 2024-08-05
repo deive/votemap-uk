@@ -9,98 +9,124 @@ const mapSlice = createSlice({
         areaNames: ['UK'],
         selectedArea: 'UK',
         selectedType: 'Local Authorities',
-        areas: {
-            'UK': {
-                years: [1927],
-                selectedYear: 1927,
-                1927: {
-                    layerDepth: 0,
-                    year: 1927,
-                    url: undefined,
-                    'Local Authorities': {
-                        'England': {
-                            years: [2023],
-                            2023: {
-                                layerDepth: 1,
-                                year: 2023,
-                                url: undefined,
-                                'East Midlands': {
-                                    layerDepth: 2,
-                                    url: undefined,
-                                    'Barnsley': {
-                                        layerDepth: 3,
-                                        url: undefined,
-                                    }
-                                }
-                            }
-                        },
-                    }
-                }
-            },
-        },
+        areas: {},
         mapUrlError: undefined,
         currentLayer: undefined,
     },
     reducers: {
         setCountriesUrl: (state, data) => {
-            if (!state.areas[state.selectedArea]) {
-                state.areas[state.selectedArea] = {}
-            }
-            const area = state.areas[state.selectedArea]
-            const year = data.payload.year
-            if (!area[year]) {
-                area[year] = {}
-            }
-            area.selectedYear = year
+            const area = getSelectedArea(state)
             area.years = data.payload.years
+            area.selectedYear = data.payload.year
 
-            const areaYear = area[year]
+            const areaYear = getSelectedAreaYear(state, area)
             areaYear.layerDepth = 0
             areaYear.name = state.selectedArea
-            areaYear.year = year
+            areaYear.year = area.selectedYear
             areaYear.url = data.payload.url
             state.currentLayer = areaYear
         },
         setCountryUrl: (state, data) => {
-            const area = state.areas[state.selectedArea]
-            const areaYear = area[area.selectedYear][state.selectedType]
-            const name = data.payload.name
-            if (!areaYear[name]) {
-                areaYear[name] = {}
-            }
-            const country = areaYear[name]
-            const year = data.payload.year
-            country.selectedYear = year
-            country.years = data.payload.years
+            const selectedType = getSelectedType(state)
+            selectedType.selected = data.payload.name
 
-            if (!country[year]) {
-                country[year] = {}
-            }
-            const countryYear = country[year]
+            const country = getSelectedCountry(state, selectedType)
+            country.years = data.payload.years
+            country.selectedYear = data.payload.year
+
+            const countryYear = getSelectedCountryYear(state, country)
             countryYear.layerDepth = 1
-            countryYear.name = name
-            countryYear.year = year
+            countryYear.name = selectedType.selected
+            countryYear.year = country.selectedYear
             countryYear.url = data.payload.url
             state.currentLayer = countryYear
         },
         setRegionUrl: (state, data) => {
-            // if (!state.currentLayer) {
-            //     state.currentLayer = state.countries
-            // } else if (state.currentLayer === state.countries) {
-            //     // TODO: Select country.
-            // } {
-            //     // TODO: Select region/sub region.
-            // }
-            // state.currentLayer.url = data.payload.countriesMapUrl
+            state.currentLayer.selected = data.payload.name
+            const region = getSelectedRegion(state)
+            region.layerDepth = state.currentLayer.layerDepth + 1
+            region.name = state.currentLayer.selected
+            region.url = data.payload.url
         },
         deselectCountry: (state) => {
             const area = state.areas[state.selectedArea]
             state.currentLayer = area[area.selectedYear]
         },
+        deselectRegion: (state) => {
+            // const area = state.areas[state.selectedArea]
+            // state.currentLayer = area[area.selectedYear]
+        },
     },
 })
 
 export default mapSlice.reducer
-export const { setCountriesUrl, setCountryUrl, deselectCountry, setRegionUrl } = mapSlice.actions
+export const { setCountriesUrl, setCountryUrl, deselectCountry, setRegionUrl, deselectRegion } = mapSlice.actions
 export const selectSelectedDate = state => state.selectedDate
 export const selectCurrentLayer = state => state.currentLayer
+export const selectSelectedCountry = state => {
+    if (state.selectedArea) {
+        const selectedArea = state.areas[state.selectedArea]
+        if (selectedArea && selectedArea.selectedYear) {
+            const selectedAreaYear = selectedArea[selectedArea.selectedYear]
+            if (selectedAreaYear && state.selectedType) {
+                return selectedAreaYear[state.selectedType]?.selected
+            }
+        }
+    }
+}
+
+function getSelectedRegion(state) {
+    if (state.currentLayer && state.currentLayer.selected) {
+        if (!state.currentLayer[state.currentLayer.selected]) {
+            state.currentLayer[state.currentLayer.selected] = {}
+        }
+        return state.currentLayer[state.currentLayer.selected]
+    }
+}
+
+function getSelectedCountryYear(state, country) {
+    const c = country ?? getSelectedCountry(state)
+    if (c && c.selectedYear) {
+        if (!c[c.selectedYear]) {
+            c[c.selectedYear] = {}
+        }
+        return c[c.selectedYear]
+    }
+}
+
+function getSelectedCountry(state, selectedType) {
+    const sT = selectedType ?? getSelectedType(state)
+    if (sT && sT.selected) {
+        if (!sT[sT.selected]) {
+            sT[sT.selected] = {}
+        }
+        return sT[sT.selected]
+    }
+}
+
+function getSelectedType(state) {
+    const areaYear = getSelectedAreaYear(state)
+    if (areaYear) {
+        if (!areaYear[state.selectedType]) {
+            areaYear[state.selectedType] = {}
+        }
+        return areaYear[state.selectedType]
+    }
+}
+
+function getSelectedAreaYear(state, area) {
+    const a = area ?? getSelectedArea(state)
+    if (a.selectedYear) {
+        if (!a[a.selectedYear]) {
+            a[a.selectedYear] = {}
+        }
+        return a[a.selectedYear]
+    }
+}
+
+function getSelectedArea(state) {
+    if (!state.areas[state.selectedArea]) {
+        state.areas[state.selectedArea] = {}
+    }
+    return state.areas[state.selectedArea]
+}

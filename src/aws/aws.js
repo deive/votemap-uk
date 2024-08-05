@@ -71,16 +71,16 @@ export async function getCountriesMapUrl(areaYear) {
     return await getMapUrl(`UK_${areaYear}`)
 }
 
-export async function getCountryMapUrl(areaYear, type, country, countryYear) {
-    return await getMapUrl(`UK_${areaYear}/${type}/${country}/${country}_${countryYear}`)
-}
-
 export async function getCountryMapYears(areaYear, type, country) {
     return await getMapYears(`UK_${areaYear}/${type}/${country}/`, country)
 }
 
-export async function getRegionMapUrl(year, type, country, path) {
-    return await getMapUrl(`${type}/${country}_${year}/${path}`)
+export async function getCountryMapUrl(areaYear, type, country, countryYear) {
+    return await getMapUrl(`UK_${areaYear}/${type}/${country}/${country}_${countryYear}`)
+}
+
+export async function getRegionMapUrl(areaYear, type, country, countryYear, path) {
+    return await getMapUrl(`UK_${areaYear}/${type}/${country}/${country}_${countryYear}/${path}`)
 }
 
 async function getMapUrl(name) {
