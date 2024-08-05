@@ -68,15 +68,20 @@ export function foregroundLayer(mapLayer) {
   mapLayer.layer.setOpacity(1)
 }
 
-export function createLayer(sourceUrl, onClick, onDeselect) {
+export function createLayer(sourceUrl, onClick, onDeselect, onLoadError) {
+  const format = new GeoJSON({
+    dataProjection: BRITISH_NATIONAL_GRID_PROJECTION,
+  })
   const source = new SourceVector({
-    format: new GeoJSON({
-      dataProjection: BRITISH_NATIONAL_GRID_PROJECTION,
-    }),
+    format: format,
     url: sourceUrl,
   })
   const sourceLayer = new LayerVector({
     source: source,
+  })
+
+  source.once('featuresloaderror', function(e) {
+    onLoadError()
   })
 
   MAP.on("click", (event) => {

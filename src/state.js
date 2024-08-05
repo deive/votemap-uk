@@ -2,7 +2,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import isEqual from 'lodash.isequal'
 import pDebounce from 'p-debounce'
 
-import authSlice from './auth/state'
+import authSlice, { LoginState } from './auth/state'
 import awsSlice from './aws/state'
 import mapSlice from './map/state'
 
@@ -48,9 +48,12 @@ export function observeStore(store, select, onChange) {
   })
 
   function loadState() {
+    const token = localStorage.getItem("token")
     return {
       auth: {
-        loginToken: localStorage.getItem("token"),
+        loginRequest: undefined,
+        loginState: token ? LoginState.AUTHENTICATED : LoginState.UNAUTHENTICATED,
+        loginToken: token,
       },
     }
   }

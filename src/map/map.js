@@ -1,202 +1,127 @@
 import store, { observeStore } from '../state'
-import { LoginState, selectLoginState } from '../auth/state'
-import { selectCountriesMapUrl, setCountriesMapUrl } from './state'
+import { LoginState, logout, selectLoginState } from '../auth/state'
+import { selectCurrentLayer, setCountriesUrl, setCountryUrl, deselectCountry, setRegionUrl } from './state'
 // import { selectCountry, setCountry, deselectCountry, selectRegion, setRegion, deselectRegion } from '../route/slice.js'
 // import { selectCountriesMapUrl, selectCountryMapUrl, loadCountriesMapUrl, loadCountryMapUrl, selectLocalAuthorityRegionMapUrl, loadLocalAuthorityRegionMapUrl } from './slice.js'
 import { createLayer, addLayer, removeLayer, fadeLayer, foregroundLayer, zoomOnLoad, zoomTo } from './map-ui.js'
-import { getCountriesMapUrl } from '../aws/aws'
+import { getCountriesMapUrl, getCountryMapUrl, getCountryMapYears, getRegionMapUrl } from '../aws/aws'
 
-var countriesLayer = undefined
-var countryLayers = {}
-var regionLayers = {}
-var selectedCountryName = undefined
-var selectedRegionName = undefined
+var layers = undefined
 
 observeStore(
   store, state => {
     return {
       loginState: selectLoginState(state.auth),
-      countriesMapUrl: selectCountriesMapUrl(state.map),
+      currentLayer: selectCurrentLayer(state.map),
       country: "",//selectCountry(state.route),
     }
   }, state => {
     if (state.loginState == LoginState.AUTHENTICATED) {
-      ensureCountriesLayer(state)
+      ensureLayer(state)
     }
   }
 )
 
-async function ensureCountriesLayer(state) {
-  if (!state.countriesMapUrl) {
-    const url = await getCountriesMapUrl()
-    store.dispatch(setCountriesMapUrl({countriesMapUrl: url}))
+async function ensureLayer(state) {
+  if (!state.currentLayer) {
+    loadCountriesMapUrl()
+  } else if (state.currentLayer.layerDepth == 0 && !layers) {
+    loadCountriesLayer(state)
+  } else if (state.currentLayer.layerDepth == 1 && layers.length == 1) {
+    loadCountryLayer(state)
   } else {
-    countriesLayer = createLayer(
-      state.countriesMapUrl, 
-      feature => {
-        // TODO: Dynamic feature name for country name attribute.
-        const countryName = feature.get("CTRY23NM")
-        // store.dispatch(setCountry(countryName))
-      },
-      () => {
-        // store.dispatch(deselectCountry())
-        zoomTo(countriesLayer)
-      }
-    )
-    zoomOnLoad(countriesLayer)
-    addLayer(countriesLayer)
+    // loadCountriesLayer(state)
+  }
+
+  if (state.currentLayer) {
+    if (layers.length > 1 + state.currentLayer.layerDepth) {
+      layers.forEach((layer) => {
+        if (layer.index > state.currentLayer.layerDepth) {
+          removeLayer(layer.layer) 
+        }
+      })
+      layers = layers.filter((layer) => layer.index > state.currentLayer.layerDepth)
+    }
   }
 }
 
-// observeStore(
-//   store, state => {
-//     return {
-//       userAuth: selectUserAuth(state.auth),
-//       countriesMapUrl: "",//selectCountriesMapUrl(state.map),
-//       country: "",//selectCountry(state.route),
-//     }
-//   }, state => {
-//     if (state.userAuth) {
-//       if (!state.countriesMapUrl) {
-//         // Get the private URL.
-//         store.dispatch(loadCountriesMapUrl())
-//       } else if (!countriesLayer) {
-//         // Create the layer.
-//         countriesLayer = createLayer(
-//           state.countriesMapUrl, 
-//           feature => {
-//             // TODO: Dynamic feature name for country name attribute.
-//             const countryName = feature.get("CTRY23NM")
-//             // store.dispatch(setCountry(countryName))
-//           },
-//           () => {
-//             // store.dispatch(deselectCountry())
-//             zoomTo(countriesLayer)
-//           }
-//         )
-//         if (!state.country) {
-//           zoomOnLoad(countriesLayer)
-//         } else {
-//           fadeLayer(countriesLayer)
-//         }
-//         addLayer(countriesLayer)
-//       } else {
-//         // Fade out countries if a specific country is shown.
-//         if (!state.country) {
-//           foregroundLayer(countriesLayer)
-//         } else {
-//           fadeLayer(countriesLayer)
-//         }
-//       }
-//     }
-//   }
-// )
+function loadCountriesLayer(state) {
+  layers = []
+  loadLayer(
+    0,
+    "UK",
+    state.currentLayer.url,
+    feature => {
+      const countryName = feature.get("CTRY23NM")
+      loadCountryMapUrl(countryName)
+    },
+    () => {
+      store.dispatch(deselectCountry())
+    }
+  )
+  zoomOnLoad(layers[0].layer)
+  addLayer(layers[0].layer)
+}
 
-// observeStore(
-//   store, state => {
-//     return {
-//       userAuth: selectUserAuth(state.auth),
-//       country: "",//selectCountry(state.route),
-//       region: "",//selectRegion(state.route),
-//       selectedCountryMapUrl: "",//selectCountryMapUrl(state.map, selectCountry(state.route)),
-//     }
-//   }, state => {
-//     if (state.userAuth) {
-//       if (state.country && !state.selectedCountryMapUrl) {
-//         // Get the private URL.
-//         store.dispatch(loadCountryMapUrl({ country: state.country }))
-//       } else if (!countryLayers[state.country]) {
-//         const layer = createLayer(
-//           state.selectedCountryMapUrl, 
-//           feature => {
-//             // TODO: Dynamic feature name for region name attribute.
-//             const regionName = feature.get("RGN23NM")
-//             // store.dispatch(setRegion(regionName))
-//           },
-//           () => {
-//             // store.dispatch(deselectRegion())
-//             zoomTo(countryLayers[state.country])
-//           }
-//         )
-//         zoomOnLoad(layer)
-//         addLayer(layer)
-//         if (selectedCountryName) {
-//           removeLayer(countryLayers[selectedCountryName])
-//         }
-//         countryLayers[state.country] = layer
-//         selectedCountryName = state.country
-//       } else if (selectedCountryName != state.country) {
-//         const layerToRemove = selectedCountryName ? countryLayers[selectedCountryName] : undefined
-//         if (state.country) {
-//           const layer = countryLayers[state.country]
-//           addLayer(layer)
-//           zoomTo(layer)
-//         }
-//         if (layerToRemove) {
-//           removeLayer(layerToRemove)
-//         }
-//         selectedCountryName = state.country
-//       } else {
-//         // Fade out country if a specific region is shown.
-//         const layer = countryLayers[state.country]
-//         if (!state.region) {
-//           foregroundLayer(layer)
-//         } else {
-//           fadeLayer(layer)
-//         }
-//       }
-//     }
-//   }
-// )
+function loadCountryLayer(state) {
+  loadLayer(
+    1,
+    "UK",
+    state.currentLayer.url,
+    feature => {
+      // TODO: Dynamic feature name for country name attribute.
+      const countryName = feature.get(`CTRY${year}NM`)
+      loadCountryMapUrl(countryName)
+    },
+    () => {
+      // store.dispatch(deselectCountry())
+    }
+  )
+  zoomOnLoad(layers[1].layer)
+  addLayer(layers[1].layer)
+}
 
-// observeStore(
-//   store, state => {
-//     return {
-//       userAuth: selectUserAuth(state.auth),
-//       country: "",//selectCountry(state.route),
-//       region: "",//selectRegion(state.route),
-//       selectedRegionMapUrl: "",//selectLocalAuthorityRegionMapUrl(state.map, selectCountry(state.route), 2023, selectRegion(state.route)),
-//     }
-//   }, state => {
-//     if (state.userAuth) {
-//       if (state.country && state.region) {
-//         if (!regionLayers[state.country]) {
-//           regionLayers[state.country] = {}
-//         }
-//         if (!regionLayers[state.country][2023]) {
-//           regionLayers[state.country][2023] = {}
-//         }
+function loadLayer(layerIndex, layerName, sourceUrl, onClick, onDeselect) {
+  layers[layerIndex] = {
+    index: layerIndex,
+    name: layerName,
+    layer: createLayer(
+      sourceUrl, 
+      onClick,
+      onDeselect,
+      () => {
+        store.dispatch(logout())
+      },
+    ),
+  }
+}
 
-//         if (!state.selectedRegionMapUrl) {
-//           // Get the private URL.
-//           store.dispatch(loadLocalAuthorityRegionMapUrl({ country: state.country, year: 2023, region: state.region }))
-//         } else if (!regionLayers[state.country][2023][state.region]) {
-//           const layer = createLayer(state.selectedRegionMapUrl, feature => {
-//             // TODO: Dispatch select feature to URL params handler.
-//             // const regionName = feature.get("RGN23NM")
-//             // store.dispatch(setCountry(countryName))
-//             console.log(feature.get("RGN23NM"))
-//           })
-//           zoomOnLoad(layer)
-//           addLayer(layer)
-//           if (selectedRegionName) {
-//             removeLayer(regionLayers[state.country][2023][selectedRegionName])
-//           }
-//           regionLayers[state.country][2023][state.region] = layer
-//           selectedRegionName = state.region
-//         } else if (selectedRegionName != state.region) {
-//           const layerToRemove = selectedRegionName ? regionLayers[state.country][2023][selectedRegionName] : undefined
-//           if (state.region) {
-//             const layer = regionLayers[state.country][2023][state.region]
-//             addLayer(layer)
-//             zoomTo(layer)
-//           }
-//           if (layerToRemove) {
-//             removeLayer(layerToRemove)
-//           }
-//           selectedRegionName = state.region
-//         }
-//       }
-//     }
-//   }
-// )
+async function loadCountriesMapUrl() {
+  const url = await getCountriesMapUrl(1927)
+  store.dispatch(setCountriesUrl({
+    year: 1927,
+    years: [1927],
+    url: url,
+  }))
+}
+
+async function loadCountryMapUrl(countryName) {
+  const years = await getCountryMapYears(1927, "Local Authorities", countryName)
+  if (years.length == 0) {
+    store.dispatch(logout())
+  }
+  else {
+    const url = await getCountryMapUrl(1927, "Local Authorities", countryName, years[0])
+    store.dispatch(setCountryUrl({
+      name: countryName,
+      year: years[0],
+      years: years,
+      url: url
+    }))
+  }
+}
+
+async function loadRegionMapUrl(currentLayer, name) {
+  // const url = await getCountriesMapUrl()
+  // store.dispatch(setChildLayer({mapUrl: url}))
+}

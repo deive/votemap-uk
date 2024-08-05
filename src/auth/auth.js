@@ -47,6 +47,8 @@ observeStore(
             }
         } else {
             MODAL_LOGIN.hide()
+            LOGIN_NAME.value = ""
+            LOGIN_PASSWORD.value = ""
         }
     }
 )
