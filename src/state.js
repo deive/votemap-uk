@@ -3,13 +3,11 @@ import isEqual from 'lodash.isequal'
 import pDebounce from 'p-debounce'
 
 import authSlice, { LoginState } from './auth/state'
-import awsSlice from './aws/state'
 import mapSlice from './map/state'
 
 const store = configureStore({
     reducer: {
       auth: authSlice,
-      aws: awsSlice,
       map: mapSlice,
     },
     preloadedState: loadState(),

@@ -4,7 +4,6 @@ import { S3Client, GetObjectCommand, ListObjectsV2Command } from '@aws-sdk/clien
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 import store, { observeStore } from '../state'
-import { selectClientInitilised, setInitilised } from './state'
 import { LoginState, selectLoginState, selectLoginRequest, selectLoginToken, setLoggedIn, setLogInError, logout } from '../auth/state'
 
 const mapsRegion = 'eu-west-2'
@@ -14,7 +13,6 @@ var s3Client = undefined
 observeStore(
     store, state => {
         return {
-            clientInitilised: selectClientInitilised(state.aws),
             loginState: selectLoginState(state.auth),
             loginRequest: selectLoginRequest(state.auth),
             loginToken: selectLoginToken(state.auth),
@@ -23,19 +21,15 @@ observeStore(
         if (state.loginState == LoginState.LOGGING_IN && state.loginRequest) {
             const token = await login(state.loginRequest.username, state.loginRequest.password)
             if (s3Client) {
-                store.dispatch(setInitilised())
                 store.dispatch(setLoggedIn({token: token}))
             } else {
-                // TODO: Better error handling
                 store.dispatch(setLogInError({error: ''}))
             }
-        } else if (state.loginState == LoginState.UNAUTHENTICATED && state.clientInitilised) {
-            s3Client = undefined
-        }
-
-        if (!state.clientInitilised && state.loginToken) {
+        } else if (!s3Client && state.loginToken) {
             createS3Client(state.loginToken)
             store.dispatch(setLoggedIn({token: state.loginToken}))
+        } else if (state.loginState == LoginState.UNAUTHENTICATED && s3Client) {
+            s3Client = undefined
         }
     }
 )
@@ -118,12 +112,13 @@ async function getMapYears(folder, name) {
 
 async function awsCall(call) {
     try {
-        return call()
+        return await call()
     } catch (err) {
         if (err['name'] == 'NotAuthorizedException') {
             store.dispatch(logout())
         } else {
-            store.dispatch(setLogInError({error: err['name']}))
+            console.log(`AWS/AWS .awsCall() error '${err.name}': ${err}`)
+            store.dispatch(setLogInError({ error: err.name }))
         }
     }
 }

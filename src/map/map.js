@@ -40,7 +40,7 @@ async function ensureLayer(state) {
           removeLayer(layer.layer) 
         }
       })
-      layers = layers.filter((layer) => layer.index > state.currentLayer.layerDepth)
+      layers = layers.filter((layer) => layer.index <= state.currentLayer.layerDepth)
     }
   }
 }
@@ -53,7 +53,9 @@ function loadCountriesLayer(state) {
     state.currentLayer.url,
     feature => {
       const countryName = feature.get("CTRY23NM")
-      loadCountryMapUrl(countryName)
+      if (countryName != 'Northern Ireland') {
+        loadCountryMapUrl(countryName)
+      }
     },
     () => {
       store.dispatch(deselectCountry())
@@ -66,15 +68,14 @@ function loadCountriesLayer(state) {
 function loadCountryLayer(state) {
   loadLayer(
     1,
-    "UK",
+    state.currentLayer.name,
     state.currentLayer.url,
     feature => {
-      // TODO: Dynamic feature name for country name attribute.
-      const countryName = feature.get(`CTRY${year}NM`)
+      const countryName = feature.get(`CTRY${state.currentLayer.year}NM`)
       loadCountryMapUrl(countryName)
     },
     () => {
-      // store.dispatch(deselectCountry())
+      store.dispatch(deselectCountry())
     }
   )
   zoomOnLoad(layers[1].layer)

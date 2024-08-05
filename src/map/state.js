@@ -56,6 +56,7 @@ const mapSlice = createSlice({
 
             const areaYear = area[year]
             areaYear.layerDepth = 0
+            areaYear.name = state.selectedArea
             areaYear.year = year
             areaYear.url = data.payload.url
             state.currentLayer = areaYear
@@ -77,6 +78,7 @@ const mapSlice = createSlice({
             }
             const countryYear = country[year]
             countryYear.layerDepth = 1
+            countryYear.name = name
             countryYear.year = year
             countryYear.url = data.payload.url
             state.currentLayer = countryYear
