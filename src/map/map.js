@@ -21,25 +21,22 @@ observeStore(
 )
 
 async function ensureLayer(state) {
+  if (layers && state.currentLayer) {
+    if (layers.length > state.currentLayer.layerDepth) {
+      const layersToRemove = layers.filter((layer) => layer.index >= state.currentLayer.layerDepth && layer.index > 0)
+      layers = layers.filter((layer) => layer.index == 0 || layer.index < state.currentLayer.layerDepth)
+      layersToRemove.forEach((layer) => { removeLayer(layer.layer)  })
+    }
+  }
+
   if (!state.currentLayer) {
     loadCountriesMapUrl()
-  } else if (state.currentLayer.layerDepth == 0 && !layers) {
+  } else if (state.currentLayer.layerDepth == 0 && !layers?.length) {
     loadCountriesLayer(state)
   } else if (state.currentLayer.layerDepth == 1 && layers.length == 1) {
     loadCountryLayer(state)
-  } else {
+  } else if (state.currentLayer.layerDepth > 1 && layers.length == state.currentLayer.layerDepth) {
     loadRegionLayer(state)
-  }
-
-  if (state.currentLayer) {
-    if (layers.length > 1 + state.currentLayer.layerDepth) {
-      layers.forEach((layer) => {
-        if (layer.index > state.currentLayer.layerDepth) {
-          removeLayer(layer.layer) 
-        }
-      })
-      layers = layers.filter((layer) => layer.index <= state.currentLayer.layerDepth)
-    }
   }
 }
 
@@ -56,7 +53,9 @@ function loadCountriesLayer(state) {
       }
     },
     () => {
-      store.dispatch(deselectCountry())
+      if (layers.length == 2) {
+        store.dispatch(deselectCountry())
+      }
     }
   )
   zoomOnLoad(layers[0].layer)
@@ -74,7 +73,9 @@ function loadCountryLayer(state) {
       loadRegionMapUrl(state.currentLayer.name, state.currentLayer.year, '', regionName)
     },
     () => {
-      store.dispatch(deselectCountry())
+      if (layers.length == 3) {
+        store.dispatch(deselectRegion())
+      }
     }
   )
   zoomOnLoad(layers[1].layer)
@@ -93,7 +94,9 @@ function loadRegionLayer(state) {
       loadRegionMapUrl(regionName)
     },
     () => {
-      store.dispatch(deselectRegion())
+      if (layers.length > 3) {
+        store.dispatch(deselectRegion())
+      }
     }
   )
   zoomOnLoad(layers[state.currentLayer.layerDepth].layer)
