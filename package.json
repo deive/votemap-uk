@@ -7,7 +7,7 @@
     "serve": "vite preview"
   },
   "devDependencies": {
-    "vite": "^5.3.1",
+    "vite": "^5.4.0",
     "vite-plugin-string": "^1.2.3",
     "webpack": "^5.93.0"
   },
