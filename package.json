@@ -25,6 +25,6 @@
     "proj4": "^2.11.0",
     "redux-query-sync": "^0.1.10",
     "redux-views": "^1.0.3",
-    "uikit": "^3.21.3"
+    "uikit": "^3.21.9"
   }
 }
